@@ -7,6 +7,7 @@ public class AES {
     /**
      * Rijndael S-box
      * http://en.wikipedia.org/wiki/Rijndael_S-box
+     * http://www.formaestudio.com/rijndaelinspector/archivos/Rijndael_Animation_v4_eng.swf
      */
     private final short SBOX[][] =
             {
@@ -27,6 +28,13 @@ public class AES {
                     {0xE1, 0xF8, 0x98, 0x11, 0x69, 0xD9, 0x8E, 0x94, 0x9B, 0x1E, 0x87, 0xE9, 0xCE, 0x55, 0x28, 0xDF},
                     {0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16}
             };
+
+    private final short mMixColumns[][] = {
+            {2, 3, 1, 1},
+            {1, 2, 3, 1},
+            {1, 1, 2, 3},
+            {3, 1, 1, 2}
+    };
 
 
     /**
@@ -51,11 +59,12 @@ public class AES {
 
     /**
      * Generate key from string
+     *
      * @return byte array
      */
-    private byte[][] generateKey() {
+    private short[][] generateKey() {
         //initialize
-        byte[][] result = new byte[getHeight()][getWidth()];
+        short[][] result = new short[getHeight()][getWidth()];
         //convert key to bytes
         byte[] keyBytes = mKey.getBytes();
 
@@ -67,12 +76,12 @@ public class AES {
         return result;
     }
 
-    private byte[][] getInputAsByte(int offset) {
+    private short[][] getInputAsByte(int offset) {
 
         byte[] inputBytes = mInput.getBytes();
 
         //for converted text
-        byte[][] result = new byte[getHeight()][getWidth()];
+        short[][] result = new short[getHeight()][getWidth()];
 
         int off = calcOffset(offset);
 
@@ -98,8 +107,8 @@ public class AES {
 
     public String encrypt() {
 
-        byte[][] state;
-        byte[][] key = generateKey();
+        short[][] state;
+        short[][] key = generateKey();
 
         int counter = 0;
 
@@ -113,15 +122,10 @@ public class AES {
                 break;
             }
 
-            for (int i = 0; i < 9; i++){
+            addRoundKey(key, state);
 
-                //replace from sbox
+            for (int i = 0; i < 9; i++) {
 
-                for(int y=0;y<getWidth();y++){
-                    for(int x=0;x<getHeight();x++){
-                      ///  state[x][y] = SBOX[(byte)(state[x][y] >> 4)]
-                    }
-                }
 
             }
 
@@ -131,6 +135,45 @@ public class AES {
         return output;
     }
 
+    private short[][] mixColumns(short[][] data) {
+
+
+        return data;
+    }
+
+    private short[][] shiftRows(short[][] data) {
+
+        short tmp;
+        short result[][] = new short[getHeight()][getWidth()];
+        for (int x = 0; x < getHeight(); x++) {
+            for (int y = 0; y < getWidth(); y++) {
+                result[x][y] = data[x][(getWidth() + y - x) % getWidth()];
+            }
+        }
+        return result;
+    }
+
+    private short[][] subBytes(short[][] data) {
+        for (int y = 0; y < getWidth(); y++) {
+            for (int x = 0; x < getHeight(); x++) {
+                short high = (short) (data[x][y] >> 4);
+                short low = (short) (data[x][y] & 0xF);
+                data[x][y] = SBOX[high][low];
+            }
+        }
+
+        return data;
+    }
+
+    private short[][] addRoundKey(short[][] key, short[][] data) {
+
+        for (int y = 0; y < getWidth(); y++) {
+            for (int x = 0; x < getWidth(); x++) {
+                data[x][y] ^= key[x][y];
+            }
+        }
+        return data;
+    }
 
     private final int calcOffset(int offset) {
         switch (mMode) {
